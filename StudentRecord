@@ -1,0 +1,67 @@
+<?php
+class StudentRecord{
+    protected $sec_ad;
+    public $col = array('firstname','lastname','email','phone','login','password');
+    private $student_data;
+
+    //implement database stuff later
+    public function __construct($student_data/*, SecureAdapter $sec_ad =null*/) {
+        //$this->sec_ad = ($sec_ad) ?: new SecureAdapter;
+        if(!empty($student_data)){
+            $this->setLocalRecord($student_data);
+        }
+	else{
+            throw new Exception('Empty array or null passed to student record');
+        }
+    }
+
+    public function setLocalRecord($data){
+        if(!empty($data)){
+            foreach($data as $key => $val){
+                foreach($this->col as $value){
+                    if($key==$value){
+                        $this->student_data[$key] = $val;
+                    }
+                }
+            }
+	}
+	else{
+            throw new Exception('Empty array or null passed to student record');
+        }
+    }
+
+    public function setDbRecord($data){
+        $keyval = $data;
+
+        if(!empty($data)){
+            foreach($keyval as $key => $value){
+                $safe_key = $this->sec_ad->secureField($key);
+                $sec_key[] = '`' .$safe_key. '`';
+                $safe_value = $this->sec_ad->secureField($value);
+                $sec_val[] = '`' .$safe_value. '`';
+                $this->student_data[$sec_key] = $sec_val;
+            }
+
+            $cat_vals = implode(',',$sec_val);
+            $cat_keys = implode(',',$sec_key);
+            $result = $this->sec_ad -> query("INSERT INTO `students` (".$cat_keys.") VALUES (" .$cat_vals. ")");
+        }
+	else{
+            echo 'setDbRecord Needs array with value key pairs from html forms';
+        }
+
+	return $result;
+    }
+
+    public function getRecord(){
+        return $this->student_data;
+    }
+
+    public function getRecordById($id){
+        $sec_id = $this->sec_ad->secureField($id);
+        $rec = $this->sec_ad -> select("SELECT * FROM `students` WHERE id=$sec_id");
+        return $rec;
+    }
+
+}
+?>
